@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBoxEstadoActualizar->addItems({"pendiente", "completada"});
     ui->comboBoxEstadoActualizar->setVisible(true);
     ui->comboBoxEstadoActualizar->setEnabled(true);
-    ui->comboBoxEstadoActualizar->raise();
+    //ui->comboBoxEstadoActualizar->raise(); Se usa para traer el elemento a la parte superior, anteponiendose ante cualquier objeto.
 
     connect(ui->btnMostrarTareas, &QPushButton::clicked, this, &MainWindow::mostrarTareas);
     connect(ui->btnAgregar, &QPushButton::clicked, this, &MainWindow::agregar_tarea);
@@ -55,7 +55,7 @@ void MainWindow::guardar_todas_las_tareas(const QString &archivo) {
     for (const Tarea &t : tareas) {
         QString estadoTexto = t.estado ? "pendiente" : "completada";
         out << t.numero_tarea << "|"
-            << QString::fromStdString(t.descripcion) << "|"
+            << t.descripcion << "|"
             << estadoTexto << "\n";
     }
 
@@ -72,7 +72,7 @@ void MainWindow::renumerarTareas() {
 void MainWindow::cargarTareasDesdeArchivo(const string& archivoTareas) {
     tareas.clear();
 
-    ifstream archivo("cronilist.txt");
+    ifstream archivo(archivoTareas);
     if (!archivo.is_open()) return;
 
     string linea;
@@ -86,7 +86,7 @@ void MainWindow::cargarTareasDesdeArchivo(const string& archivoTareas) {
 
         Tarea t;
         t.numero_tarea = stoi(numero);
-        t.descripcion = descripcion;
+        t.descripcion = QString::fromStdString(descripcion);
         t.estado = (estado == "pendiente");
 
         tareas.push_back(t);
@@ -101,7 +101,7 @@ void MainWindow::guardar_tarea(const Tarea &tarea, const QString &archivo) {
     }
     QTextStream out(&file); //escribir dentro del archivo
     QString estadoTexto = tarea.estado ? "pendiente" : "completada"; //pasamos los 1 y 0 ha texto
-    out << tarea.numero_tarea << "|" << QString::fromStdString(tarea.descripcion) << "|" << estadoTexto << "\n";
+    out << tarea.numero_tarea << "|" << tarea.descripcion << "|" << estadoTexto << "\n";
     file.close();
 }
 
@@ -117,7 +117,7 @@ void MainWindow::agregar_tarea() {
 
     //se crea la tarea
     Tarea nueva;
-    nueva.descripcion = descripcion.toStdString();
+    nueva.descripcion = descripcion;
     nueva.estado = true;
     nueva.numero_tarea = contar_tareas("cronilist.txt") + 1;
 
@@ -138,7 +138,7 @@ void MainWindow::mostrarTareas()
         QString texto;
         for (const auto &tarea : tareas) {
             texto += QString::number(tarea.numero_tarea) +
-                     ".- "+ QString::fromStdString(tarea.descripcion) +
+                     ".- "+ tarea.descripcion +
                      " | Estado: " + (tarea.estado ? "pendiente" : "completada") + "\n";
         }
         ui->txtTareas->setText(texto);
@@ -163,7 +163,7 @@ void MainWindow::actualizar_tarea() {
 
     QString nuevaDescripcion = ui->lineEditDescripcionActualizar->text().trimmed();
     if (!nuevaDescripcion.isEmpty()) {
-        it->descripcion = nuevaDescripcion.toStdString();
+        it->descripcion = nuevaDescripcion;
     }
     QString estadoSeleccionado = ui->comboBoxEstadoActualizar->currentText();
     it->estado = (estadoSeleccionado.toLower() == "pendiente");
